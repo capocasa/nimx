@@ -7,12 +7,16 @@ elif defined(emscripten):
     template native_log(a: cstring) =
         emscripten_log(0, cstring("%s"), cstring(a))
 elif defined(macosx) or defined(ios):
+    {.passL:"-framework Foundation".}
     {.emit: """
-    #include <os/log.h>
+
+    #include <CoreFoundation/CoreFoundation.h>
+    extern void NSLog(CFStringRef format, ...);
+
     """.}
 
     proc native_log(a: cstring) =
-        {.emit: "os_log(OS_LOG_DEFAULT, \"%s\", `a`);".}
+        {.emit: "NSLog(CFSTR(\"%s\"), `a`);".}
 elif defined(android):
     proc log_write(prio: cint, tag, text: cstring) {.importc: "__android_log_write".}
     template native_log(a: cstring) =
